@@ -46,6 +46,14 @@ P04/
 │       ├── 05_Final_Kaggle_semillerio_E2.ipynb      semillerio de 30 modelos, configuración E2
 │       ├── 05_Final_Kaggle_semillerio_E4.ipynb      ídem, configuración E4
 │       └── 05_Final_Kaggle_E2_S770503_semillerio100.ipynb   semillerio de 100 modelos (envío final)
+│       └── alternativas/                        pruebas hechas antes de cerrar la elección (semillerio de 30, 5 semillas)
+│           ├── E0/                              baseline, sin el FE de E2
+│           ├── modifyList/                      hiperparámetros ganadores de la grilla
+│           ├── undersampling_us10/              10% de CONTINUA en el entrenamiento final
+│           ├── canaritos/                       selección de variables con CanaritosAsesinos
+│           └── sin_id_mes/                      sin numero_de_cliente ni foto_mes
+│                                                (cada carpeta: 1 notebook de la semilla 770503 + su correr_*.sh;
+│                                                 las otras 4 semillas solo cambian PARAM$semilla_primigenia)
 ├── scripts/
 │   ├── correr_semillas.sh                       corre E2 y E4 con las 4 semillas primigenias restantes
 │   └── correr_final_E2_100.sh                   corre el semillerio de 100 reutilizando modelos y grilla
@@ -175,9 +183,23 @@ Configuración E2, semilla primigenia 770503, 100 modelos (los 30 del semillerio
 **Corte elegido: 1.475 envíos.** No se elige el máximo (1.450) porque queda justo en el borde donde la curva sube con más pendiente: un corrimiento chico del corte óptimo en el privado cuesta mucho. El corte 1.475 queda pegado al pico y apoyado en la zona estable de 1.475 a 1.525, y es consistente con la meseta de 1.500 de las otras primigenias. La diferencia entre 1.475 y 1.500 (0,8 puntos) está dentro del ruido del puntaje público, que es una parte del test. El envío es `KA9301_1475.csv` (mensaje `envios=1475 semilla=770503 semillerio=100 cfg=E2`).
 
 
+## Alternativas evaluadas antes de cerrar la elección
+
+Se probaron cinco alternativas contra E2, con el mismo criterio: semillerio de 30, las 5 semillas primigenias y el mejor puntaje público por semilla entre los cortes comunes (sin promediar envíos).
+
+| Alternativa | Qué cambia | Resultado frente a E2 |
+|---|---|---|
+| E0 (baseline) | Sin las variables nuevas de E2 | E2 gana en 5/5 |
+| modifyList | Se usan los hiperparámetros ganadores de la grilla | E2 gana en 5/5 |
+| Undersampling 10% | Entrenamiento final con 10% de CONTINUA | E2 gana en 5/5 |
+| Canaritos | CanaritosAsesinos de la cátedra (Analista Sr); quita 75 de 394 variables | E2 gana en 5/5 (máximos 89,06 / 88,56 / 88,56 / 87,81 / 88,06) |
+| Sin numero_de_cliente ni foto_mes | Se quitan del modelo; el FE los sigue usando | E2 gana en 4/4 (la quinta no se corrió). Diferencias: −2,41 / −2,41 / −0,67 / −2,82. Cortes 1300 a 1800 |
+
+Con 5 pares el p exacto mínimo es 0,031 a una cola; con 4 es 0,0625. La dirección es la misma en todas. La semilla 770503 es la primigenia de la corrida de 100 modelos y no se eligió por su puntaje. Estas pruebas se corrieron antes del cierre de la competencia y se documentaron después.
+
 ### Hiperparámetros del modelo final
 
-Igual que en el experimento, el modelo final usa los valores fijos del workflow (`num_leaves` 64, `min_data_in_leaf` 128, `feature_fraction` 0,5, `max_bin` 31, tasa de aprendizaje 0,03) y de la grilla de 50 combinaciones solo toma el número de iteraciones (95 en E2). Probar los hiperparámetros ganadores de la grilla, o una optimización bayesiana, queda como trabajo futuro: no se evaluó para no sobreajustar al puntaje público.
+Igual que en el experimento, el modelo final usa los valores fijos del workflow (num_leaves 64, min_data_in_leaf 128, feature_fraction 0,5, max_bin 31, tasa de aprendizaje 0,03) y de la grilla de 50 combinaciones solo toma el número de iteraciones (95 en E2). Usar también los hiperparámetros ganadores de la grilla (modifyList) se evaluó con las 5 primigenias y no superó a esta configuración (ver "Alternativas evaluadas"). Una optimización bayesiana queda como trabajo futuro: no se evaluó por tiempo.
 
 ### Cómo replicarlo
 
@@ -185,6 +207,7 @@ Igual que en el experimento, el modelo final usa los valores fijos del workflow 
 2. `scripts/correr_semillas.sh` corre E2 y E4 con las otras cuatro primigenias (ver los notebooks de cada semilla; cambia solo `PARAM$semilla_primigenia`).
 3. `scripts/correr_final_E2_100.sh` copia la grilla y los modelos del semillerio de 30 a la carpeta nueva y ejecuta `05_Final_Kaggle_E2_S770503_semillerio100.ipynb`, que entrena los 70 modelos restantes y envía los 9 cortes a Kaggle.
 4. Los modelos se guardan en `modelos/modelo_<semilla>.txt` y se omiten si ya existen.
+5. notebooks/final_kaggle/alternativas/ contiene el notebook (semilla 770503) y el script de cada alternativa evaluada; las otras 4 semillas solo cambian PARAM$semilla_primigenia. 
 
 ## Limitaciones
 
@@ -195,5 +218,6 @@ Igual que en el experimento, el modelo final usa los valores fijos del workflow 
 - Las transformaciones se aplican a todas las variables, por lo que no se separa el aporte de cada una ni se controla si la mejora viene de la información o de sumar columnas.
 - Dataset Junior con pocas variables originales.
 - Modelo final de Kaggle: el puntaje público es una parte del test y el corte se eligió mirándolo; el puntaje privado puede diferir. La comparación E2 contra E4 usa solo 5 primigenias (p mínimo posible).
+- Las alternativas se evaluaron solo con semillerio de 30 y puntaje público; la prueba sin numero_de_cliente ni foto_mes quedó con 4 de 5 semillas.
 
 El detalle está en el documento del trabajo y en la presentación.
